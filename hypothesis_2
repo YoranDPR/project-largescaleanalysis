@@ -63,7 +63,9 @@ dataset_multivariate <- dataset_multivariate %>%
          Lactobacillus_Gender = Lactobacillus * Gender)
 
 # Fit the multivariate logistic regression model
-model <- glm(New_Group ~ Bifidobacterium + Faecalibacterium + Lactobacillus + consent_age + Gender + Faecalibacterium_Age + Bifidobacterium_Age + Lactobacillus_Age + Bifidobacterium_Antibiotics + Faecalibacterium_Antibiotics + Lactobacillus_Antibiotics + Bifidobacterium_Gender + Faecalibacterium_Gender + Lactobacillus_Gender ,data = dataset_multivariate, family = binomial)
+model <- glm(New_Group ~ Bifidobacterium + Faecalibacterium + Lactobacillus + consent_age + Gender + Antibiotics + Faecalibacterium_Age + Bifidobacterium_Age + 
+Lactobacillus_Age + Bifidobacterium_Antibiotics + Faecalibacterium_Antibiotics + Lactobacillus_Antibiotics + Bifidobacterium_Gender + 
+Faecalibacterium_Gender + Lactobacillus_Gender ,data = dataset_multivariate, family = binomial)
 
 # Print the summary of the model
 summary(model)
