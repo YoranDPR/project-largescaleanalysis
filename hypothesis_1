@@ -1,0 +1,107 @@
+---
+title: "IBD_Project_Final"
+output: html_document
+date: "2024-12-01"
+---
+
+## Loading packages
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+library(dplyr)
+library(car)
+```
+
+## Loading data
+```{r}
+genera_counts <- read_tsv("genera.counts.tsv")
+metadata <- read_tsv("metadata.tsv")
+
+summary(metadata)
+```
+
+## Merging data according to "Sample"
+```{r}
+merged_data <- merge(genera_counts, metadata, by = "Sample")
+```
+
+## First hypothesis:
+Do the protective bacteria (Bifidobacterium spp., Faecalibacterium prausnitzii, and Lactobacillus spp.) differ between IBD and non-IBD patients? 
+**H0**: There is no difference in the mean abundance of protective bacteria between IBD and non-IBD patients.
+**H1**: There is a difference in the mean abundance of protective bacteria between IBD and non-IBD patients.
+
+## Filtering data
+```{r}
+# Age at diagnosis --> Age_at_diagnosis
+colnames(metadata) <- gsub(" ", "_", colnames(metadata))
+
+# Making a new group containing the disease state
+merged_data$Disease_State <- ifelse(merged_data$Study.Group %in% c("UC", "CD"), "IBD", "non-IBD")
+
+# Filtering the data to only include the protective bacteria
+protective_bacteria <- c(
+  "d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium",
+  "d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium",
+  "d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus")
+
+# Check if the protective bacteria are present in the merged data
+missing_columns <- protective_bacteria[!(protective_bacteria %in% colnames(merged_data))]
+
+# Calculate the total abundance of protective bacteria present
+merged_data$Protective_Bacteria_Total <- rowSums(merged_data[, protective_bacteria], na.rm = TRUE)
+
+# Delete rows with missing values
+data_filtered <- merged_data[!is.na(merged_data$Protective_Bacteria_Total) & !is.na(merged_data$Disease_State), ]
+
+Machine_learning <- write.csv(data_filtered, "filtered_data.csv", row.names = FALSE)
+
+
+```
+
+## Checking the assumptions
+```{r}
+# Checking the normality of the data
+ggplot(data_filtered, aes(x = Protective_Bacteria_Total)) +
+  geom_histogram(bins = 30, color = "black", fill = "blue", alpha = 0.7) +
+  labs(title = "Histogram of the total abundance of protective bacteria",
+       x = "Total abundance", y = "Frequency") +
+  theme_minimal()
+
+# Log transformation of the Protective_Bacteria_Total
+data_filtered$Protective_Bacteria_Total_log <- log(data_filtered$Protective_Bacteria_Total)
+
+# Checking the normality of the log-transformed data
+ggplot(data_filtered, aes(x = Protective_Bacteria_Total_log)) +
+  geom_histogram(bins = 30, color = "black", fill = "blue", alpha = 0.7) +
+  labs(title = "Histogram of the log-transformed total abundance of protective bacteria",
+       x = "Log-transformed total abundance", y = "Frequency") +
+  theme_minimal()
+
+# QQ-plot of the log-transformed data
+qqPlot(data_filtered$Protective_Bacteria_Total_log, main = "QQ-plot of the log-transformed total abundance of protective bacteria")
+
+# Levene's test for homogeneity of variances
+levene_test <- leveneTest(Protective_Bacteria_Total_log ~ Disease_State, data = data_filtered)
+levene_test
+```
+We can see that the data is not normally distributed and that he variances are statistically similar (p > 0.05). Therefore, we will use a non-parametric test to test the hypothesis.
+
+## Testing the hypothesis
+```{r}
+# Mann-whitney test
+mannwhitney_test <- wilcox.test(Protective_Bacteria_Total_log ~ Disease_State, data = data_filtered)
+mannwhitney_test
+
+merged_data%>%
+  group_by(Disease_State)%>%
+  summarise(Total = n())
+
+# Visualisation of the total abundance of protective bacteria in each group
+ggboxplot(data_filtered, x = "Disease_State", y = "Protective_Bacteria_Total_log", 
+          color = "Disease_State", palette = c("#00AFBB", "#E7B800"),
+          add = "jitter", ylab = "Total abundance of protective bacteria (log-transformed)",
+          xlab = "Disease state", 
+          caption = "Mann-Whitney test: p = 0.1486")
+```
+A **Mann Withney test** with significance level $\alpha$ of **0.05** indicated that the difference in **Total Protective Bacteria** does not significantly differ between the IBD and non-IBD group (IBD, n=278; non-IBD, n=104). A **p-value of 0.1486** was observed, indicating that, based on our data, the null hypothesis can not be rejected. 
