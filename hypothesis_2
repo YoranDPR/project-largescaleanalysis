@@ -1,1 +1,72 @@
+# The data_filtered tibble is used to generate a new dataset with logtransformed protective bacteria and encoded categorical data.
 
+mutlivariate_variables <- c("Antibiotics","consent_age","Gender","d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium","d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium","d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus" )
+
+dataset_multivariate <- data_filtered %>% select(Sample, Subject, New_Group, mutlivariate_variables)
+
+#mutating the tibble for doing multivariate analysis
+dataset_multivariate <- dataset_multivariate %>% 
+  mutate(Antibiotics = ifelse(Antibiotics == "Yes", 1,0),
+         New_Group = ifelse(New_Group == "IBD", 1,0),
+         Gender = ifelse(Gender == "Female", 1,0))
+
+#renaming the colum names of bacteria to make it easier for calling up  
+dataset_multivariate <- dataset_multivariate %>%
+  rename(Bifidobacterium = "d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium", Faecalibacterium = "d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium", Lactobacillus = "d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus"  )
+
+dataset_multivariate <- dataset_multivariate %>%
+  mutate(Bifidobacterium = log(Bifidobacterium + 1),
+         Faecalibacterium = log(Faecalibacterium + 1),
+         Lactobacillus = log(Lactobacillus + 1))
+
+#removing NA-values  
+dataset_multivariate <- dataset_multivariate %>% filter(!is.na(consent_age) & !is.na(Bifidobacterium) & !is.na(Faecalibacterium) & !is.na(Lactobacillus) & !is.na(Gender))
+
+#making a histogram for log-transformed data of bacteria
+ggplot(dataset_multivariate, aes(x = Bifidobacterium)) +
+  geom_histogram(binwidth = 0.5, fill = "skyblue", color = "black") +
+  labs(title = "Log-transformed Bifidobacterium Counts", x = "Log-transformed Counts", y = "Frequency") +
+  theme_minimal()
+
+ggplot(dataset_multivariate, aes(x = Faecalibacterium)) +
+  geom_histogram(bins = 30, color = "black", fill = "skyblue", alpha = 0.7) +
+  labs(title = "Histogram of log transformed Faecalibacterium counts",
+       x = "Log(count + 1)", y = "frequency") +
+  theme_minimal()
+
+ggplot(dataset_multivariate, aes(x = Lactobacillus)) +
+  geom_histogram(bins = 30, color = "black", fill = "skyblue", alpha = 0.7) +
+  labs(title = "Histogram of log transformed Lactobacillus counts",
+       x = "Log(count + 1)", y = "frequency") +
+  theme_minimal()
+
+# making qq-plots for the log-transformed data
+qqPlot(dataset_multivariate$Bifidobacterium, 
+       main = "Q-Q Plot: log transformed Bifidobacterium")
+
+qqPlot(dataset_multivariate$Faecalibacterium, 
+       main = "Q-Q Plot: log transformed Faecalibacterium")
+
+qqPlot(dataset_multivariate$Lactobacillus, 
+       main = "Q-Q Plot: log transformed Lactobacillus")
+
+#creating interaction terms for the regression model 
+dataset_multivariate <- dataset_multivariate %>%
+  mutate(Bifidobacterium_Age = Bifidobacterium * consent_age,
+         Faecalibacterium_Age = Faecalibacterium * consent_age,
+         Lactobacillus_Age = Lactobacillus * consent_age,
+         Bifidobacterium_Antibiotics = Bifidobacterium * Antibiotics,
+         Faecalibacterium_Antibiotics = Faecalibacterium * Antibiotics,
+         Lactobacillus_Antibiotics = Lactobacillus * Antibiotics,
+         Bifidobacterium_Gender = Bifidobacterium * Gender,
+         Faecalibacterium_Gender = Faecalibacterium * Gender,
+         Lactobacillus_Gender = Lactobacillus * Gender)
+
+# Fit the multivariate logistic regression model
+model <- glm(New_Group ~ Bifidobacterium + Faecalibacterium + Lactobacillus + consent_age + Gender + Faecalibacterium_Age + Bifidobacterium_Age + Lactobacillus_Age + Bifidobacterium_Antibiotics + Faecalibacterium_Antibiotics + Lactobacillus_Antibiotics + Bifidobacterium_Gender + Faecalibacterium_Gender + Lactobacillus_Gender ,data = dataset_multivariate, family = binomial)
+
+# Print the summary of the model
+summary(model)
+
+#calculating R-squared to determine value of our model
+1-model$deviance/model$null.deviance
