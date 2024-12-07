@@ -1,9 +1,3 @@
----
-title: "IBD_Project_Final"
-output: html_document
-date: "2024-12-01"
----
-
 ## Loading packages
 ```{r}
 library(tidyverse)
@@ -17,7 +11,6 @@ library(car)
 ```{r}
 genera_counts <- read_tsv("genera.counts.tsv")
 metadata <- read_tsv("metadata.tsv")
-
 summary(metadata)
 ```
 
