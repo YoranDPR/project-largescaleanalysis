@@ -1,4 +1,4 @@
-## Loading packages
+# Loading packages
 ```{r}
 library(tidyverse)
 library(ggpubr)
@@ -7,57 +7,57 @@ library(dplyr)
 library(car)
 ```
 
-## Loading data
+# Loading data
 ```{r}
 genera_counts <- read_tsv("genera.counts.tsv")
 metadata <- read_tsv("metadata.tsv")
 summary(metadata)
 ```
 
-## Merging data according to "Sample"
+# Merging data according to "Sample"
 ```{r}
 merged_data <- merge(genera_counts, metadata, by = "Sample")
 ```
 
-## First hypothesis:
+# First hypothesis:
 Do the protective bacteria (Bifidobacterium spp., Faecalibacterium prausnitzii, and Lactobacillus spp.) differ in abundance between IBD and non-IBD patients? 
 **H0**: There is no difference in the mean abundance of protective bacteria between IBD and non-IBD patients.
 **H1**: There is a difference in the mean abundance of protective bacteria between IBD and non-IBD patients.
 
-## Filtering data
+# Filtering data
 ```{r}
-# Age at diagnosis --> Age_at_diagnosis
+## Age at diagnosis --> Age_at_diagnosis
 colnames(merged_data) <- gsub(" ", "_", colnames(merged_data))
 
-# Making a new group containing the disease state
+## Making a new group containing the disease state
 merged_data$Disease_State <- ifelse(merged_data$Study.Group %in% c("UC", "CD"), "IBD", "non-IBD")
 
-# Filtering the data to only include the protective bacteria
+## Filtering the data to only include the protective bacteria
 protective_bacteria <- c(
   "d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium",
   "d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium",
   "d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus")
 
-# Check if the protective bacteria are present in the merged data
+## Check if the protective bacteria are present in the merged data
 missing_columns <- protective_bacteria[!(protective_bacteria %in% colnames(merged_data))]
 missing_columns
 
-# Calculate the total abundance of protective bacteria present and add a new column to the dataset
+## Calculate the total abundance of protective bacteria present and add a new column to the dataset
 merged_data$Protective_Bacteria_Total <- rowSums(merged_data[, protective_bacteria], na.rm = TRUE)
 
-# Count missing values
+## Count missing values
 colSums(is.na(merged_data[c("Protective_Bacteria_Total", "Disease_State")]))
 
-# Filter the dataset to retain only patients who are not using antibiotics
+## Filter the dataset to retain only patients who are not using antibiotics
 merged_data_no_antibiotics <- merged_data %>%
   filter(Antibiotics == "No")
 
-# Check if the IBD status is consistent across patients
+## Check if the IBD status is consistent across patients
 inconsistent_IBD_status <- merged_data_no_antibiotics %>%
   group_by(Subject) %>%
   filter(n_distinct(Disease_State) > 1)
 
-# Calculate the mean of 'protective_bacteria' per 'subject' 
+## Calculate the mean of 'protective_bacteria' per 'subject' 
 merged_data_no_antibiotics <- merged_data_no_antibiotics %>%
   group_by(Subject) %>%
   summarise(
@@ -65,58 +65,58 @@ merged_data_no_antibiotics <- merged_data_no_antibiotics %>%
     Protective_Bacteria_Total = round(mean(Protective_Bacteria_Total, na.rm = TRUE))  
   )
 
-# Examine the first rows of the dataset
+## Examine the first rows of the dataset
 head(merged_data_no_antibiotics)
 
 
 Machine_learning <- write.csv(merged_data_no_antibiotics, "merged_data_no_antibiotics.csv", row.names = FALSE)
 ```
 
-## Checking the assumptions
+# Checking the assumptions
 ```{r}
-# Checking the normality of the data
+## Checking the normality of the data
 ggplot(merged_data_no_antibiotics, aes(x = Protective_Bacteria_Total)) +
   geom_histogram(bins = 30, color = "black", fill = "blue", alpha = 0.7) +
   labs(title = "Histogram of the total abundance of protective bacteria",
        x = "Total abundance", y = "Frequency") +
   theme_minimal()
 
-# QQ-plot of the data
+## QQ-plot of the data
 qqPlot(merged_data_no_antibiotics$Protective_Bacteria_Total, main = "QQ-plot of the total abundance of protective bacteria")
 
 
-# Log transformation of the Protective_Bacteria_Total
+## Log transformation of the Protective_Bacteria_Total
 merged_data_no_antibiotics$Protective_Bacteria_Total_log <- log(merged_data_no_antibiotics$Protective_Bacteria_Total)
 
-# Checking the normality of the log-transformed data
+## Checking the normality of the log-transformed data
 ggplot(merged_data_no_antibiotics, aes(x = Protective_Bacteria_Total_log)) +
   geom_histogram(bins = 30, color = "black", fill = "blue", alpha = 0.7) +
   labs(title = "Histogram of the log-transformed total abundance of protective bacteria",
        x = "Log-transformed total abundance", y = "Frequency") +
   theme_minimal()
 
-# QQ-plot of the log-transformed data
+## QQ-plot of the log-transformed data
 qqPlot(merged_data_no_antibiotics$Protective_Bacteria_Total_log, main = "QQ-plot of the log-transformed total abundance of protective bacteria")
 
 
-# Square root transformation
+## Square root transformation
 merged_data_no_antibiotics$Protective_Bacteria_Total_sqrt <- sqrt(merged_data_no_antibiotics$Protective_Bacteria_Total)
 
-# Check the normality of the square root-transformed data
+## Check the normality of the square root-transformed data
 ggplot(merged_data_no_antibiotics, aes(x = Protective_Bacteria_Total_sqrt)) +
   geom_histogram(bins = 30, color = "black", fill = "blue", alpha = 0.7) +
   labs(title = "Histogram of the sqrt-transformed total abundance of protective bacteria",
        x = "Square root-transformed total abundance", y = "Frequency") +
   theme_minimal()
 
-# QQ-plot of the square root-transformed data
+## QQ-plot of the square root-transformed data
 qqPlot(merged_data_no_antibiotics$Protective_Bacteria_Total_sqrt, main = "QQ-plot of the sqrt-transformed total abundance of protective bacteria")
 ```
 Given that the data is not normally distributed, a non-parametric test, specifically the Mann-Whitney U test, will be employed to assess the hypothesis.
 
-## Testing the hypothesis
+# Testing the hypothesis
 ```{r}
-# Mann-whitney test
+## Mann-whitney test
 mannwhitney_test <- wilcox.test(Protective_Bacteria_Total_sqrt ~ Disease_State, data = merged_data_no_antibiotics)
 mannwhitney_test
 
@@ -124,7 +124,7 @@ merged_data_no_antibiotics%>%
   group_by(Disease_State)%>%
   summarise(Total = n())
 
-# Visualisation of the total abundance of protective bacteria in each group
+## Visualisation of the total abundance of protective bacteria in each group
 ggboxplot(merged_data_no_antibiotics, x = "Disease_State", y = "Protective_Bacteria_Total_sqrt", 
           color = "Disease_State", palette = c("#00AFBB", "#E7B800"),
           add = "jitter", ylab = "Total abundance of protective bacteria (square root-transformed)",
