@@ -112,7 +112,7 @@ ggplot(merged_data_no_antibiotics, aes(x = Protective_Bacteria_Total_sqrt)) +
 ## QQ-plot of the square root-transformed data
 qqPlot(merged_data_no_antibiotics$Protective_Bacteria_Total_sqrt, main = "QQ-plot of the sqrt-transformed total abundance of protective bacteria")
 ```
-Given that the data is not normally distributed, a non-parametric test, specifically the Mann-Whitney U test, will be employed to assess the hypothesis.
+Given that the data is not normally distributed, a non-parametric test, specifically the Mann-Whitney U test, will be employed to assess the hypothesis. The square root of the data is used to reduce the impact of outliers and stabilize the distribution, making the statistical test more robust and reliable.
 
 # Testing the hypothesis
 ```{r}
