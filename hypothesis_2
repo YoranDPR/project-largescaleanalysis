@@ -7,7 +7,7 @@ dataset_multivariate <- merged_data %>% select(Sample, Subject, Disease_State, m
 #mutating the tibble for doing multivariate analysis
 dataset_multivariate <- dataset_multivariate %>% 
   mutate(Antibiotics = ifelse(Antibiotics == "Yes", 1,0),
-         New_Group = ifelse(New_Group == "IBD", 1,0),
+         Disease_State = ifelse(Disease_State == "IBD", 1,0),
          Gender = ifelse(Gender == "Female", 1,0))
 
 #renaming the colum names of bacteria to make it easier for calling up  
