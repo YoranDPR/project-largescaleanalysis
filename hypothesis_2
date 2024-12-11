@@ -1,3 +1,4 @@
+```{r}
 # The data_filtered tibble is used to generate a new dataset with logtransformed protective bacteria and encoded categorical data.
 
 mutlivariate_variables <- c("Antibiotics","consent_age","Gender","d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium","d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium","d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus" )
@@ -72,3 +73,4 @@ summary(model)
 
 #calculating R-squared to determine value of our model
 1-model$deviance/model$null.deviance
+```
