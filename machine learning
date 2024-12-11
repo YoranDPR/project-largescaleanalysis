@@ -110,7 +110,7 @@ print("Training MSE:", train_mse)
 print("Testing MSE:", test_mse)
 
 
-# This tells us that the model is capable of correctly prodicting everything in the training dataset, but was not able to do the same in the test dataset. This is an indication of overfitting and working from memory.
+# This tells us that the model is capable of correctly predicting everything in the training dataset, but was not able to do the same in the test dataset. This is an indication of overfitting and working from memory.
 
 # In[11]:
 
