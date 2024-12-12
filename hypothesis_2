@@ -1,17 +1,19 @@
 ```{r}
-# The merged_data tibble is used to generate a new dataset.
+
+# The data_filtered tibble is used to generate a new dataset with logtransformed protective bacteria and encoded categorical data.
 
 mutlivariate_variables <- c("Antibiotics","consent_age","Gender","d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium","d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium","d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus" )
 
 dataset_multivariate <- merged_data %>% select(Sample, Subject, Disease_State, mutlivariate_variables)
 
-#mutating the tibble for doing multivariate analysis
-dataset_multivariate <- dataset_multivariate %>% 
-  mutate(Antibiotics = ifelse(Antibiotics == "Yes", 1,0),
-         Gender = ifelse(Gender == "Female", 1,0))
 
-# Convert Disease_State to a factor
-dataset_multivariate$Disease_State <- factor(dataset_multivariate$Disease_State, levels = c("non-IBD", "IBD"))
+# Convert Disease_State, gender and Antibiotics to a factor
+dataset_multivariate <- dataset_multivariate %>%
+  mutate(
+    Disease_State = factor(Disease_State, levels = c("non-IBD", "IBD")),
+    Gender = factor(Gender, levels = c("Male", "Female")),
+    Antibiotics = factor(Antibiotics, levels = c("No", "Yes"))
+  )
 
 #renaming the colum names of bacteria to make it easier for calling up  
 dataset_multivariate <- dataset_multivariate %>%
@@ -74,7 +76,7 @@ qqPlot(dataset_multivariate$Lactobacillus,
 ```
 ```{r}
 # Fit the model
-model <- glmer(Disease_State ~ Gender + Bifidobacterium + Faecalibacterium + Lactobacillus +  (1 | Subject), data = dataset_multivariate, family = binomial, control = glmerControl(optCtrl = list(maxfun = 500000)))
+model <- glmer(Disease_State ~ Gender + Bifidobacterium + Faecalibacterium + Lactobacillus + Antibiotics + (1 | Subject), data = dataset_multivariate, family = binomial, control = glmerControl(optCtrl = list(maxfun = 500000)))
 
 # Print the summary of the model
 summary(model)
@@ -94,4 +96,15 @@ ggplot(melted_df, aes(x = Disease_State, y = Count, fill = Bacteria)) +
 ggplot(dataset_multivariate, aes(x = Gender, fill = Disease_State)) +
   geom_bar(position = "dodge") +
   labs(title = "Effect of Gender on Disease State", x = "Gender", y = "Count")
+
+# Bar plot of Disease_State by Antibiotics use
+ggplot(dataset_multivariate, aes(x = Antibiotics, fill = Disease_State)) +
+  geom_bar(position = "fill") +  # 'fill' gives proportions
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Distribution of Disease State by Antibiotics Use",
+       x = "Antibiotics Use",
+       y = "Proportion",
+       fill = "Disease State") +
+  theme_minimal()
+
 ```
