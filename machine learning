@@ -10,7 +10,7 @@ label_encoder = LabelEncoder()
 
 filtered_data = pd.read_csv("filtered_data.csv", low_memory = False)
 filtered_data.columns
-filtered_data.head(50)
+filtered_data.head()
 
 
 # In[2]:
@@ -31,37 +31,28 @@ X.loc[:,'smoking status'] = label_encoder.fit_transform(X['smoking status'])
 X.loc[:,'Gender'] = label_encoder.fit_transform(X['Gender'])
 X.loc[:,'Antibiotics'] = label_encoder.fit_transform(X['Antibiotics'])
 y = label_encoder.fit_transform(y)
-X.head(20)
+X.head()
 
 
 # In[4]:
 
 
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 IBD_model = DecisionTreeClassifier(random_state=1)
-IBD_model.fit(X, y)
+IBD_model.fit(X_train, y_train)
 
 
 # In[5]:
 
 
-print("Making predictions for the following 40 patients:")
-print(X.head())
-print("The predictions are")
-print(IBD_model.predict(X.head()))
-
-
-# In[6]:
-
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-IBD_model.fit(X_train, y_train)
 predictions = IBD_model.predict(X_test)
 predictions
 
 
-# In[7]:
+# In[6]:
 
 
 from sklearn.metrics import mean_squared_error
@@ -74,7 +65,17 @@ baseline_mse = np.mean((y_test - baseline_prediction) ** 2)
 print("Baseline MSE:", baseline_mse)
 
 
-# Our model's MSE is a fraction better than the baseline, which means it is not performing that well. It should be significantly outperforming it to be good. 
+# Our model's MSE is a fraction better than the baseline, which means it is not performing that well. It should be significantly outperforming it to be good.
+
+# In[7]:
+
+
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(y_test, predictions.round())
+print("Accuracy:", accuracy)
+
+
+# The fraction of correctly predicted labels.
 
 # In[8]:
 
@@ -89,16 +90,6 @@ print("R² Score:", r2)
 # In[9]:
 
 
-from sklearn.metrics import accuracy_score
-accuracy = accuracy_score(y_test, predictions.round())
-print("Accuracy:", accuracy)
-
-
-# The fraction of correctly predicted labels.
-
-# In[10]:
-
-
 train_predictions = IBD_model.predict(X_train)
 test_predictions = IBD_model.predict(X_test)
 
@@ -110,9 +101,9 @@ print("Training MSE:", train_mse)
 print("Testing MSE:", test_mse)
 
 
-# This tells us that the model is capable of correctly predicting everything in the training dataset, but was not able to do the same in the test dataset. This is an indication of overfitting and working from memory.
+# This tells us that the model can correctly predict everything in the training dataset, but was not able to do the same in the test dataset. This is an indication of overfitting and working from memory.
 
-# In[11]:
+# In[10]:
 
 
 from sklearn.metrics import confusion_matrix
@@ -126,107 +117,24 @@ plt.title("Confusion Matrix")
 plt.show()
 
 
-# True vs. predicted labels.
-
-# In[12]:
+# In[11]:
 
 
 import matplotlib.pyplot as plt
+import numpy as np
+
+x_positions = np.arange(len(Disease_features)) 
 feature_importances = IBD_model.feature_importances_
-plt.bar(Disease_features, feature_importances)
+plt.bar(x_positions, feature_importances, align='center') 
+plt.xticks(x_positions, Disease_features, rotation=45, ha='right') 
 plt.xlabel('Features')
-plt.xticks(rotation=45)
 plt.ylabel('Importance')
 plt.title('Feature Importance')
+plt.tight_layout()
 plt.show()
 
 
-# In[13]:
-
-
-IBD_model = DecisionTreeClassifier(max_depth=5, random_state=1)
-IBD_model.fit(X, y)
-
-
-# In[14]:
-
-
-print("Making predictions for the following 40 patients:")
-print(X.head())
-print("The predictions are")
-print(IBD_model.predict(X.head()))
-
-
-# In[15]:
-
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-IBD_model.fit(X_train, y_train)
-predictions = IBD_model.predict(X_test)
-predictions
-
-
-# In[16]:
-
-
-mse = mean_squared_error(y_test, predictions)
-print("Mean Squared Error:", mse)
-baseline_prediction = np.mean(y_test)
-baseline_mse = np.mean((y_test - baseline_prediction) ** 2)
-print("Baseline MSE:", baseline_mse)
-
-
-# In[17]:
-
-
-accuracy = accuracy_score(y_test, predictions.round())
-print("Accuracy:", accuracy)
-
-
-# In[18]:
-
-
-r2 = r2_score(y_test, predictions)
-print("R² Score:", r2)
-
-
-# In[19]:
-
-
-train_predictions = IBD_model.predict(X_train)
-test_predictions = IBD_model.predict(X_test)
-
-train_mse = mean_squared_error(y_train, train_predictions)
-test_mse = mean_squared_error(y_test, test_predictions)
-
-print("Training MSE:", train_mse)
-print("Testing MSE:", test_mse)
-
-
-# In[20]:
-
-
-cm = confusion_matrix(y_test, predictions.round())
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.title("Confusion Matrix")
-plt.show()
-
-
-# In[21]:
-
-
-feature_importances = IBD_model.feature_importances_
-plt.bar(Disease_features, feature_importances)
-plt.xlabel('Features')
-plt.xticks(rotation=45)
-plt.ylabel('Importance')
-plt.title('Feature Importance')
-plt.show()
-
-
-# In[27]:
+# In[12]:
 
 
 from sklearn.tree import plot_tree
@@ -244,4 +152,97 @@ plot_tree(
 )
 
 plt.show()
+
+
+# Not good, let's tune the model.
+
+# In[13]:
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+IBD_model = DecisionTreeClassifier(max_depth=5, random_state=1, class_weight="balanced")
+IBD_model.fit(X_train, y_train)
+predictions = IBD_model.predict(X_test)
+predictions
+
+
+# In[14]:
+
+
+mse = mean_squared_error(y_test, predictions)
+print("Mean Squared Error:", mse)
+baseline_prediction = np.mean(y_test)
+baseline_mse = np.mean((y_test - baseline_prediction) ** 2)
+print("Baseline MSE:", baseline_mse)
+accuracy = accuracy_score(y_test, predictions.round())
+print("Accuracy:", accuracy)
+r2 = r2_score(y_test, predictions)
+print("R² Score:", r2)
+
+
+# In[15]:
+
+
+train_predictions = IBD_model.predict(X_train)
+test_predictions = IBD_model.predict(X_test)
+
+train_mse = mean_squared_error(y_train, train_predictions)
+test_mse = mean_squared_error(y_test, test_predictions)
+
+print("Training MSE:", train_mse)
+print("Testing MSE:", test_mse)
+
+
+# In[16]:
+
+
+cm = confusion_matrix(y_test, predictions.round())
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
+
+# In[17]:
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+x_positions = np.arange(len(Disease_features)) 
+feature_importances = IBD_model.feature_importances_
+plt.bar(x_positions, feature_importances, align='center') 
+plt.xticks(x_positions, Disease_features, rotation=45, ha='right') 
+plt.xlabel('Features')
+plt.ylabel('Importance')
+plt.title('Feature Importance')
+plt.tight_layout()
+plt.show()
+
+
+# In[18]:
+
+
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+plt.figure(figsize=(20, 10))
+plot_tree(
+    IBD_model,
+    feature_names=Disease_features,
+    class_names=[str(cls) for cls in label_encoder.classes_],
+    filled=True,
+    rounded=True,
+    fontsize=10
+)
+
+plt.show()
+
+
+# In[ ]:
+
+
+
 
