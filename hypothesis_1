@@ -1,12 +1,15 @@
-# Loading packages
 ```{r}
+# Loading packages
 library(tidyverse)
 library(ggpubr)
 library(ggplot2)
 library(dplyr)
 library(car)
 library(lme4)
+install.packages(reshape2)
 library(reshape2)
+install.packages("effectsize")
+library(effectsize)
 ```
 
 # Loading data
