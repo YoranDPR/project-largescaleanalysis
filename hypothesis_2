@@ -96,7 +96,7 @@ ggplot(dataset_multivariate, aes(x = Gender, fill = Disease_State)) +
   geom_bar(position = "dodge") +
   labs(title = "Effect of Gender on Disease State", x = "Gender", y = "Count")
 
-# Bar plot of Disease_State by Antibiotics_Use
+# Bar plot of Disease_State by antibiotic use
 ggplot(dataset_multivariate, aes(x = Antibiotics, fill = Disease_State)) +
   geom_bar(position = "fill") +  # 'fill' gives proportions
   scale_y_continuous(labels = scales::percent) +
