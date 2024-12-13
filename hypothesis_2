@@ -1,6 +1,6 @@
 ```{r}
 
-# The data_filtered tibble is used to generate a new dataset with logtransformed protective bacteria and encoded categorical data.
+# The merged_data tibble is used to generate a new dataset with logtransformed protective bacteria and encoded categorical data.
 
 mutlivariate_variables <- c("Antibiotics","consent_age","Gender","d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium","d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium","d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus" )
 
@@ -74,7 +74,6 @@ qqPlot(dataset_multivariate$Faecalibacterium,
 qqPlot(dataset_multivariate$Lactobacillus, 
        main = "Q-Q Plot: log transformed Lactobacillus")
 ```
-```{r}
 # Fit the model
 model <- glmer(Disease_State ~ Gender + Bifidobacterium + Faecalibacterium + Lactobacillus + Antibiotics + (1 | Subject), data = dataset_multivariate, family = binomial, control = glmerControl(optCtrl = list(maxfun = 500000)))
 
@@ -97,7 +96,7 @@ ggplot(dataset_multivariate, aes(x = Gender, fill = Disease_State)) +
   geom_bar(position = "dodge") +
   labs(title = "Effect of Gender on Disease State", x = "Gender", y = "Count")
 
-# Bar plot of Disease_State by Antibiotics use
+# Bar plot of Disease_State by Antibiotics_Use
 ggplot(dataset_multivariate, aes(x = Antibiotics, fill = Disease_State)) +
   geom_bar(position = "fill") +  # 'fill' gives proportions
   scale_y_continuous(labels = scales::percent) +
@@ -107,4 +106,20 @@ ggplot(dataset_multivariate, aes(x = Antibiotics, fill = Disease_State)) +
        fill = "Disease State") +
   theme_minimal()
 
+# Extract residuals
+residuals <- residuals(model, type = "pearson")
+
+# Create a residuals plot
+ggplot(data = data.frame(Index = 1:length(residuals), Residuals = residuals), aes(x = Index, y = Residuals)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(title = "Residuals Plot", x = "Index", y = "Residuals") +
+  theme_minimal()
+
+#shapiro test for checking normal distribution of the residuals to decide the quality of the model
+shapiro.test(resid(model))
+
+#calculate the effect sizes
+effect_sizes <- standardize_parameters(model)
+print(effect_sizes)
 ```
