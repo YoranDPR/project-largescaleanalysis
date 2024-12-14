@@ -73,6 +73,8 @@ qqPlot(dataset_multivariate$Faecalibacterium,
 qqPlot(dataset_multivariate$Lactobacillus, 
        main = "Q-Q Plot: log transformed Lactobacillus")
 ```
+
+```{r}
 # Fit the model
 model <- glmer(Disease_State ~ Gender + Bifidobacterium + Faecalibacterium + Lactobacillus + Antibiotics + (1 | Subject), data = dataset_multivariate, family = binomial, control = glmerControl(optCtrl = list(maxfun = 500000)))
 
