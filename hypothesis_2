@@ -1,5 +1,4 @@
 ```{r}
-
 # The merged_data tibble is used to generate a new dataset with logtransformed protective bacteria and encoded categorical data.
 
 mutlivariate_variables <- c("Antibiotics","consent_age","Gender","d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium","d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium","d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus" )
@@ -15,7 +14,7 @@ dataset_multivariate <- dataset_multivariate %>%
     Antibiotics = factor(Antibiotics, levels = c("No", "Yes"))
   )
 
-#renaming the colum names of bacteria to make it easier for calling up  
+# Renaming the colum names of bacteria to make it easier for calling up  
 dataset_multivariate <- dataset_multivariate %>%
   rename(Bifidobacterium = "d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Bifidobacteriaceae;g__Bifidobacterium", Faecalibacterium = "d__Bacteria;p__Firmicutes_A;c__Clostridia;o__Oscillospirales;f__Ruminococcaceae;g__Faecalibacterium", Lactobacillus = "d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lactobacillaceae;g__Lactobacillus"  )
 
@@ -35,18 +34,18 @@ dataset_multivariate <- dataset_multivariate %>%
          Faecalibacterium = winsorize(Faecalibacterium),
          Lactobacillus = winsorize(Lactobacillus))
 
-#log transformation of bacterial counts
+# Log transformation of bacterial counts
 dataset_multivariate <- dataset_multivariate %>%
   mutate(Bifidobacterium = log(Bifidobacterium + 1),
          Faecalibacterium = log(Faecalibacterium + 1),
          Lactobacillus = log(Lactobacillus + 1))
 
-#removing NA-values  
+# Removing NA-values  
 dataset_multivariate <- dataset_multivariate %>% filter(!is.na(consent_age) & !is.na(Bifidobacterium) & !is.na(Faecalibacterium) & !is.na(Lactobacillus) & !is.na(Gender) & !is.na(Antibiotics))
 ```
 
 ```{r}
-#making a histogram for log-transformed data of bacteria
+# Making a histogram for log-transformed data of bacteria
 ggplot(dataset_multivariate, aes(x = Bifidobacterium)) +
   geom_histogram(binwidth = 0.5, fill = "skyblue", color = "black") +
   labs(title = "Log-transformed Bifidobacterium Counts", x = "Log-transformed Counts", y = "Frequency") +
@@ -64,7 +63,7 @@ ggplot(dataset_multivariate, aes(x = Lactobacillus)) +
        x = "Log(count + 1)", y = "frequency") +
   theme_minimal()
 
-# making qq-plots for the log-transformed data
+# Making qq-plots for the log-transformed data
 qqPlot(dataset_multivariate$Bifidobacterium, 
        main = "Q-Q Plot: log transformed Bifidobacterium")
 
@@ -116,10 +115,10 @@ ggplot(data = data.frame(Index = 1:length(residuals), Residuals = residuals), ae
   labs(title = "Residuals Plot", x = "Index", y = "Residuals") +
   theme_minimal()
 
-#shapiro test for checking normal distribution of the residuals to decide the quality of the model
+# Shapiro test for checking normal distribution of the residuals to decide the quality of the model
 shapiro.test(resid(model))
 
-#calculate the effect sizes
+# Calculate the effect sizes
 effect_sizes <- standardize_parameters(model)
 print(effect_sizes)
 ```
